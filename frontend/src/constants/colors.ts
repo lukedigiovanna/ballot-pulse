@@ -5,7 +5,8 @@ const colors = {
         "republican": "red",
         "libertarian": "yellow",
         "green": "green",
-        "other": "gray"
+        "other": "gray",
+        "undefined": "lightgray"
     }
 };
 
