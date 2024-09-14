@@ -34,7 +34,7 @@ with open("../raw_data/countypres_2000-2020.csv") as f:
     reader = csv.reader(f, delimiter=',')
     next(reader, None) # skip header
     state_data = {
-        str(year): {"candidates": [], "results": {"national": {"total": 0}}} for year in range(2000, 2024, 4)
+        str(year): {"candidates": [], "national": {"popular_vote": {}, "electoral_vote": {}}, "results": {}} for year in range(2000, 2024, 4)
     }
     i = 0
     for row in reader:
@@ -43,7 +43,7 @@ with open("../raw_data/countypres_2000-2020.csv") as f:
         state_fp = fips[0:2]
         county_fp = fips[2:]
         candidate = row[6].lower()
-        candidate = ' '.join(map(lambda name: name[0].upper() + name[1:], candidate.split()))
+        candidate = ' '.join(map(lambda name: name[0].upper() + name[1:], filter(lambda n: len(n) > 1, candidate.split())))
         party = row[7].lower()
         votes = int(row[8])
         
@@ -71,13 +71,59 @@ with open("../raw_data/countypres_2000-2020.csv") as f:
         county_results[party] += votes
         county_results["total"] += votes
 
-        national_results = results["national"]
-        if party not in national_results:
-            national_results[party] = 0
-        national_results[party] += votes
-        national_results["total"] += votes
+        # national_results = results["national"]
+        # if party not in national_results:
+        #     national_results[party] = 0
+        # national_results[party] += votes
+        # national_results["total"] += votes
             
     
+
     for year in state_data:
+        national = state_data[year]["national"]
+        ec = national["electoral_vote"]
+        pv = national["popular_vote"]
+        if year == "2000":
+            ec["republican"] = 271
+            ec["democrat"] = 266
+            ec["other"] = 1
+            pv["republican"] = 50456062
+            pv["democrat"] = 50999897
+            pv["green"] = 2882955
+        elif year == "2004":
+            ec["republican"] = 286
+            ec["democrat"] = 251
+            ec["other"] = 1
+            pv["republican"] = 50456062
+            pv["democrat"] = 50999897
+            pv["green"] = 2882955
+        elif year == "2008":
+            ec["republican"] = 173
+            ec["democrat"] = 365
+            pv["republican"] = 59948323
+            pv["democrat"] = 69498516
+        elif year == "2012":
+            ec["republican"] = 206
+            ec["democrat"] = 332
+            pv["republican"] = 60933504
+            pv["democrat"] = 65915795
+            pv["libertarian"] = 1275971
+        elif year == "2016":
+            ec["republican"] = 304
+            ec["democrat"] = 227
+            ec["other"] = 7
+            pv["republican"] = 62984828
+            pv["democrat"] = 65853514
+            pv["libertarian"] = 4489341
+            pv["green"] = 1457218
+        elif year == "2020":
+            ec["republican"] = 232
+            ec["democrat"] = 306
+            pv["republican"] = 74216747
+            pv["democrat"] = 81268867
+            pv["libertarian"] = 1865720
+
+
+            
         with open(f"../data/{year}_state_election_results.json", "w") as fo:
             fo.write(json.dumps(state_data[year]))
