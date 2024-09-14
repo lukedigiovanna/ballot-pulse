@@ -60,6 +60,9 @@ const fpTable = {
 }
 
 function stateNameToFP(name: string) {
+    if (!name) {
+        return name;
+    }
     const up = name.toUpperCase();
     if (Object.hasOwn(fpTable, up)) {
         return (fpTable as any)[up];

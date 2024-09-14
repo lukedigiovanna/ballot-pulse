@@ -27,11 +27,34 @@ function App() {
   const [colorMode, setColorMode] = React.useState<ColorMode>("gradient");
   const [year, setYear] = React.useState<number>(2020);
 
+  const keyPress = (event: KeyboardEvent) => {
+    if (event.key === "ArrowLeft") {
+      setYear(Math.max(2000, year - 4));
+    }
+    else if (event.key === "ArrowRight") {
+      setYear(Math.min(2020, year + 4));
+    }
+  }
+
+  React.useEffect(() => {
+    window.addEventListener('keydown', keyPress);
+
+    return () => {
+      window.removeEventListener('keydown', keyPress);
+    };
+  }, [year]); // Empty dependency array ensures this effect runs only once
+
   const colorFunction = React.useMemo(() => {
     console.log("recompute color function");
     return (d: any) => {
-      const stateFP = stateNameToFP(d.properties.name as string);
-      const electionData = (electionResults as any)[year]["results"][stateFP];
+      const fp = countryView === "state" ? stateNameToFP(d.properties.name as string) : d.properties.STATEFP + d.properties.COUNTYFP;
+      const results = (electionResults as any)[year]["results"];
+
+      if (!Object.hasOwn(results, fp)) {
+        return colors.parties.other;
+      }
+
+      const electionData = results[fp];
       const parties = Object.keys(electionData);
       parties.sort((party1, party2) => {
         return electionData[party2] - electionData[party1]
@@ -57,18 +80,18 @@ function App() {
         return colormap(r);
       }
     }
-  }, [year, colorMode]);
+  }, [year, colorMode, countryView]);
 
   const tooltipFunction = React.useMemo(() => {
     return (d: any) => {
       const div = document.createElement("div");
       div.className = "state-results";
       const title = document.createElement("h1");
-      title.innerText = d.properties.name;
+      title.innerText = countryView === "state" ? d.properties.name : d.properties.NAME;
       div.appendChild(title);
-      const stateFP = stateNameToFP(d.properties.name as string);
+      const fp = countryView === "state" ? stateNameToFP(d.properties.name as string) : d.properties.STATEFP + d.properties.COUNTYFP;
       const electionData = (electionResults as any)[year]
-      const stateData = electionData["results"][stateFP];
+      const stateData = electionData["results"][fp];
       const candidates = electionData["candidates"];
       const parties = Object.keys(stateData);
       parties.sort((party1, party2) => {
@@ -106,7 +129,7 @@ function App() {
       }
       return div.outerHTML;
     }
-  }, [year]);
+  }, [year, countryView]);
 
   return (
     <div className="flex flex-col items-center p-4 max-w-5xl mx-auto">
@@ -171,7 +194,7 @@ function App() {
       </div>
       {
         countryView === "county" ?
-        <CountyGeoJsonMap countiesGeoJson={usCountiesGeoJson} statesGeoJson={usStatesGeoJson} />
+        <CountyGeoJsonMap countiesGeoJson={usCountiesGeoJson} statesGeoJson={usStatesGeoJson} colorFunction={colorFunction} tooltipFunction={tooltipFunction} />
         :
         <StateGeoJsonMap statesGeoJson={usStatesGeoJson} colorFunction={colorFunction} tooltipFunction={tooltipFunction}/>
       }

@@ -7,9 +7,11 @@ import { FeatureCollection } from "geojson";
 interface CountyGeoJsonMapProps {
   countiesGeoJson: FeatureCollection; // GeoJSON for counties
   statesGeoJson: FeatureCollection; // GeoJSON for state boundaries
+  colorFunction: (d: any) => string;
+  tooltipFunction: (d: any) => string; // HTML string
 }
 
-const CountyGeoJsonMap: React.FC<CountyGeoJsonMapProps> = ({ countiesGeoJson, statesGeoJson }) => {
+const CountyGeoJsonMap: React.FC<CountyGeoJsonMapProps> = ({ countiesGeoJson, statesGeoJson, colorFunction, tooltipFunction }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null); // Tooltip reference
 
@@ -48,15 +50,15 @@ const CountyGeoJsonMap: React.FC<CountyGeoJsonMapProps> = ({ countiesGeoJson, st
         .append("path")
         .attr("class", "county")
         .attr("d", pathGenerator as any) // Path generator's d attribute
-        .attr("fill", "#877eda")
+        .attr("fill", colorFunction)
         .attr("stroke", "#000")
         .attr("stroke-width", 1) // Thin stroke for county borders
-        .on("mouseover", function (event, d) {
+        .on("mouseover", function (event: any, d: any) {
           // Show the tooltip on hover
           tooltip.style("visibility", "visible")
-            .text(d.properties?.NAME); // Assuming the county name is in the "NAME" property
+            .html(tooltipFunction(d)); // Assuming the county name is in the "NAME" property
         })
-        .on("mousemove", function (event) {
+        .on("mousemove", function (event: any) {
           // Position the tooltip near the mouse cursor
           tooltip.style("top", (event.pageY - 10) + "px")
             .style("left", (event.pageX + 10) + "px");
@@ -77,7 +79,7 @@ const CountyGeoJsonMap: React.FC<CountyGeoJsonMapProps> = ({ countiesGeoJson, st
         .attr("stroke", "#000") // Black stroke for state borders
         .attr("stroke-width", 3); // Thicker stroke for state borders
     }
-  }, [countiesGeoJson, statesGeoJson]);
+  }, [countiesGeoJson, statesGeoJson, colorFunction, tooltipFunction]);
 
   return (
     <div className="">
