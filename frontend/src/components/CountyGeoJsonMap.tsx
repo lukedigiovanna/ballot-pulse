@@ -15,7 +15,7 @@ const CountyGeoJsonMap: React.FC<CountyGeoJsonMapProps> = ({ countiesGeoJson, st
 
   useEffect(() => {
     if (countiesGeoJson && statesGeoJson) {
-      const width = 800;
+      const width = 900;
       const height = 600;
 
       // Select the SVG element
@@ -25,7 +25,7 @@ const CountyGeoJsonMap: React.FC<CountyGeoJsonMapProps> = ({ countiesGeoJson, st
         .style("background-color", "white");
 
       // Create a projection and path generator
-      const projection = d3.geoMercator().fitSize([width, height], countiesGeoJson);
+      const projection = d3.geoAlbersUsa().fitSize([width, height], countiesGeoJson)
       const pathGenerator = d3.geoPath().projection(projection);
 
       // Clear any existing paths before re-drawing
@@ -48,7 +48,7 @@ const CountyGeoJsonMap: React.FC<CountyGeoJsonMapProps> = ({ countiesGeoJson, st
         .append("path")
         .attr("class", "county")
         .attr("d", pathGenerator as any) // Path generator's d attribute
-        .attr("fill", "#69b3a2")
+        .attr("fill", "#877eda")
         .attr("stroke", "#000")
         .attr("stroke-width", 1) // Thin stroke for county borders
         .on("mouseover", function (event, d) {
@@ -80,7 +80,7 @@ const CountyGeoJsonMap: React.FC<CountyGeoJsonMapProps> = ({ countiesGeoJson, st
   }, [countiesGeoJson, statesGeoJson]);
 
   return (
-    <div>
+    <div className="">
       {/* SVG for the map */}
       <svg ref={svgRef}></svg>
       {/* Tooltip element */}

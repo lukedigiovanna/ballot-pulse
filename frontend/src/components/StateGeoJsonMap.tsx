@@ -5,16 +5,17 @@ import * as d3 from "d3";
 import { FeatureCollection } from "geojson";
 
 interface StateGeoJsonMapProps {
-  statesGeoJson: FeatureCollection; // GeoJSON for state boundaries
+    statesGeoJson: FeatureCollection; // GeoJSON for state boundaries
+    colorFunction: (d: any) => string;
 }
 
-const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson }) => {
+const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson, colorFunction }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null); // Tooltip reference
 
   useEffect(() => {
     if (statesGeoJson) {
-      const width = 800;
+      const width = 900;
       const height = 600;
 
       // Select the SVG element
@@ -24,11 +25,11 @@ const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson }) => {
         .style("background-color", "white");
 
       // Create a projection and path generator
-      const projection = d3.geoMercator().fitSize([width, height], statesGeoJson);
+      const projection = d3.geoAlbersUsa().fitSize([width, height], statesGeoJson)
       const pathGenerator = d3.geoPath().projection(projection);
 
       // Clear any existing paths before re-drawing
-      svg.selectAll("*").remove();
+    //   svg.selectAll("*").remove();
 
       // Create the tooltip div
       const tooltip = d3.select(tooltipRef.current)
@@ -46,9 +47,9 @@ const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson }) => {
         .append("path")
         .attr("class", "state")
         .attr("d", pathGenerator as any) // Path generator's d attribute
-        .attr("fill", "blue")
+        .attr("fill", colorFunction)
         .attr("stroke", "#000")
-        .attr("stroke-width", 1) // Thin stroke for county borders
+        .attr("stroke-width", 3) 
         .on("mouseover", function (event, d) {
           // Show the tooltip on hover
           tooltip.style("visibility", "visible")
