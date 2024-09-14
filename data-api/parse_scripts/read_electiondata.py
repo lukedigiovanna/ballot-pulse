@@ -34,7 +34,7 @@ with open("../raw_data/countypres_2000-2020.csv") as f:
     reader = csv.reader(f, delimiter=',')
     next(reader, None) # skip header
     state_data = {
-        str(year): {"candidates": [], "results": {}} for year in range(2000, 2024, 4)
+        str(year): {"candidates": [], "results": {"national": {"total": 0}}} for year in range(2000, 2024, 4)
     }
     i = 0
     for row in reader:
@@ -70,6 +70,12 @@ with open("../raw_data/countypres_2000-2020.csv") as f:
             county_results[party] = 0
         county_results[party] += votes
         county_results["total"] += votes
+
+        national_results = results["national"]
+        if party not in national_results:
+            national_results[party] = 0
+        national_results[party] += votes
+        national_results["total"] += votes
             
     
     for year in state_data:
