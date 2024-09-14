@@ -5,6 +5,11 @@ import electionResults2012 from "../assets/2012_state_election_results.json";
 import electionResults2016 from "../assets/2016_state_election_results.json";
 import electionResults2020 from "../assets/2020_state_election_results.json";
 
+import education2012 from "../assets/2012_education.json";
+import education2016 from "../assets/2016_education.json";
+import education2020 from "../assets/2020_education.json";
+import education2022 from "../assets/2022_education.json";
+
 const fpTable = {
     "ALABAMA": "01",        
     "ALASKA": "02",        
@@ -81,7 +86,16 @@ const electionResults = {
     2020: electionResults2020,
 }
 
+const education = {
+    2012: education2012,
+    2016: education2016,
+    2020: education2020,
+    2022: education2022,
+}
+
 export { electionResults };
+
+export { education };
 
 export { electionResults2000, electionResults2004, electionResults2008, electionResults2012, 
     electionResults2016, electionResults2020

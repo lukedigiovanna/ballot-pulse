@@ -193,7 +193,7 @@ function App() {
   return (
     <div className="flex flex-col items-center p-4 max-w-5xl mx-auto">
       <h1 className="text-center text-5xl font-bold">
-        Election Data Inspector
+        Ballot Pulse
       </h1>
       <h1 className="font-bold text-xl">
         “A republic, if you can keep it” <span className="text-lg italic font-normal">-Benjamin Franklin</span>
