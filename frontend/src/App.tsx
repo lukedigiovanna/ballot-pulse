@@ -67,18 +67,42 @@ function App() {
       title.innerText = d.properties.name;
       div.appendChild(title);
       const stateFP = stateNameToFP(d.properties.name as string);
-      const electionData = (electionResults as any)[year]["results"]
-      const stateData = electionData[stateFP];
+      const electionData = (electionResults as any)[year]
+      const stateData = electionData["results"][stateFP];
+      const candidates = electionData["candidates"];
       const parties = Object.keys(stateData);
       parties.sort((party1, party2) => {
         return stateData[party2] - stateData[party1]
       });
       for (let i = 1; i < parties.length; i++) {
         const row = document.createElement("div");
-
+        row.className = "row";
+        const colorBar = document.createElement("div");
+        colorBar.className = "color-bar";
+        colorBar.style.backgroundColor = (colors.parties as any)[parties[i]];
+        row.appendChild(colorBar);
         const p = document.createElement("p");
-        p.innerText = parties[i];
-        div.appendChild(p);
+        for (let j = 0; j < candidates.length; j++) {
+          if (candidates[j].party === parties[i]) {
+            p.innerText = candidates[j].name;
+            break;
+          }
+        }
+        if (p.innerText.length === 0) {
+          p.innerText = parties[i];
+        }
+        if (i === 1) {
+          p.style.fontWeight = "bold";
+        }
+        const votes = stateData[parties[i]];
+        const proportion = votes / stateData["total"];
+        p.innerText += " (" + (Math.round(proportion * 1000) / 10) + "%)"; 
+        row.appendChild(p);
+        div.appendChild(row);
+        const voteCount = document.createElement("p");
+        voteCount.className="vote-count";
+        voteCount.innerText = "(" + votes.toLocaleString() + ")";
+        div.appendChild(voteCount);
       }
       return div.outerHTML;
     }

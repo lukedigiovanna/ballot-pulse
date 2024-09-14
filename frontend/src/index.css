@@ -18,6 +18,32 @@ code {
 
 .state-results > h1 {
   font-weight: bold;
+  font-size: 18px;
+}
+
+.state-results > .row {
+  display: flex;
+  flex-direction: row;
+  justify-items: center;
+}
+
+.state-results > .row > .color-bar {
+  width: 10px;
+  height: 18px;
+  border: 1px solid black;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+.state-results > .row > p {
+  transform: translateY(-2px);
+}
+
+.state-results > .vote-count {
+  margin-left: 20px;
+  font-size: 14px;
+  font-style: italic;
+  transform: translateY(-4px);
 }
 
 @tailwind base;
