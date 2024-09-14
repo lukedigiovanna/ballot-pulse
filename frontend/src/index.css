@@ -12,6 +12,14 @@ code {
     monospace;
 }
 
+.state-results {
+  min-width: 180px;
+}
+
+.state-results > h1 {
+  font-weight: bold;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

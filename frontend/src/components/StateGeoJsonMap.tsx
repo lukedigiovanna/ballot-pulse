@@ -7,9 +7,10 @@ import { FeatureCollection } from "geojson";
 interface StateGeoJsonMapProps {
     statesGeoJson: FeatureCollection; // GeoJSON for state boundaries
     colorFunction: (d: any) => string;
+    tooltipFunction: (d: any) => string; // HTML string
 }
 
-const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson, colorFunction }) => {
+const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson, colorFunction, tooltipFunction }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null); // Tooltip reference
 
@@ -29,7 +30,7 @@ const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson, colorF
       const pathGenerator = d3.geoPath().projection(projection);
 
       // Clear any existing paths before re-drawing
-    //   svg.selectAll("*").remove();
+      svg.selectAll("*").remove();
 
       // Create the tooltip div
       const tooltip = d3.select(tooltipRef.current)
@@ -53,7 +54,8 @@ const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson, colorF
         .on("mouseover", function (event, d) {
           // Show the tooltip on hover
           tooltip.style("visibility", "visible")
-            .text(d.properties?.name); // Assuming the county name is in the "NAME" property
+            .html(tooltipFunction(d))
+            // .text(d.properties?.name); // Assuming the county name is in the "NAME" property
         })
         .on("mousemove", function (event) {
           // Position the tooltip near the mouse cursor
@@ -65,7 +67,7 @@ const StateGeoJsonMap: React.FC<StateGeoJsonMapProps> = ({ statesGeoJson, colorF
           tooltip.style("visibility", "hidden");
         });
     }
-  }, [statesGeoJson]);
+  }, [statesGeoJson, colorFunction, tooltipFunction]);
 
   return (
     <div>
