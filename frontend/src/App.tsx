@@ -42,7 +42,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', keyPress);
     };
-  }, [year]); // Empty dependency array ensures this effect runs only once
+  }, [year]);
 
   const colorFunction = React.useMemo(() => {
     console.log("recompute color function");
@@ -84,7 +84,7 @@ function App() {
           return color;
         }
         else {
-          const r = Math.max(Math.min(diffs[parties[0]] / 0.15, 1), 0.15);
+          const r = Math.max(Math.min(diffs[parties[0]] / 0.1, 1), 0.15);
           const colormap = interpolate(["white", color]);
           return colormap(r);
         }
@@ -126,6 +126,12 @@ function App() {
       div.appendChild(title);
       const fp = countryView === "state" ? stateNameToFP(d.properties.name as string) : d.properties.STATEFP + d.properties.COUNTYFP;
       const electionData = (electionResults as any)[year]
+      if (!Object.hasOwn(electionData["results"], fp)) {
+        const p = document.createElement("p");
+        p.innerText = "No data found :(";
+        div.appendChild(p);
+        return div.outerHTML;
+      }
       const stateData = electionData["results"][fp];
       const candidates = electionData["candidates"];
       const parties = Object.keys(stateData);
@@ -182,19 +188,22 @@ function App() {
       }
       return div.outerHTML;
     }
-  }, [year, countryView]);
+  }, [year, countryView, diffMode]);
 
   return (
     <div className="flex flex-col items-center p-4 max-w-5xl mx-auto">
       <h1 className="text-center text-5xl font-bold">
         Election Data Inspector
       </h1>
+      <h1 className="font-bold text-xl">
+        “A republic, if you can keep it” <span className="text-lg italic font-normal">-Benjamin Franklin</span>
+      </h1>
       <h1 className=" text-blue-600 text-xl my-2">
         <a href="https://vote.gov/" target="_blank">
         🗳️ <span className="italic underline">REGISTER TO VOTE!</span> 🗳️
         </a>
       </h1>
-      <div className="grid grid-rows-1 grid-cols-3 w-full justify-center">
+      <div className="mt-4 grid grid-rows-1 grid-cols-3 w-full justify-center">
         <div>
           {
             year > 2000 &&
@@ -203,7 +212,7 @@ function App() {
             </p>
           }
         </div>
-        <h1 className="font-bold text-2xl text-center">
+        <h1 className="font-bold text-3xl text-center">
           { year } Election
         </h1>
         <div>
@@ -285,6 +294,72 @@ function App() {
         :
         <StateGeoJsonMap statesGeoJson={usStatesGeoJson} colorFunction={colorFunction} tooltipFunction={tooltipFunction}/>
       }
+
+      <div className="border-b-2 border-b-black w-full my-2" />
+      
+      <h1 className="font-bold text-2xl">
+        National Results
+      </h1>
+      
+      <table className="national-results">
+        <tr>
+          <th>
+            Party
+          </th>
+          <th>
+            Candidate
+          </th>
+          <th>
+            Electoral Votes
+          </th>
+          <th>
+            Popular Vote
+          </th>
+        </tr>
+        {
+          (() => {
+            const data = (electionResults as any)[year];
+            const ev = data["national"]["electoral_vote"];
+            const pv = data["national"]["popular_vote"];
+            const candidates = data["candidates"].toSorted((cand1: any, cand2: any) => {
+              if (!Object.hasOwn(pv, cand1.party)) {
+                if (!Object.hasOwn(pv, cand2.party)) {
+                  return 0;
+                }
+                else {
+                  return 1;
+                }
+              }
+              else {
+                if (Object.hasOwn(pv, cand2.party)) {
+                  return pv[cand2.party] - pv[cand1.party];
+                }
+                else {
+                  return -1;
+                }
+              }
+            });
+            return candidates.map((candidate: any) => 
+              <tr className={(Object.hasOwn(ev, candidate.party) && ev[candidate.party] >= 270) ? "win" : ""}>
+                <td>
+                  {candidate.party[0].toUpperCase() + candidate.party.substring(1)}
+                </td>
+                <td>
+                  {candidate.name}
+                </td>
+                <td>
+                  {ev[candidate.party] || 0}
+                </td>
+                <td>
+                  {Object.hasOwn(pv, candidate.party) ? pv[candidate.party].toLocaleString() : 0}
+                </td>
+              </tr>
+            )
+          })()
+        }
+      </table>
+
+      <div className="h-48"/>
     </div>
   );
 }

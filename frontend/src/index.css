@@ -46,6 +46,20 @@ code {
   transform: translateY(-4px);
 }
 
+.national-results > tr > th  {
+  font-weight: bold;
+  font-size: 18px;
+  border-bottom: 1px solid black;
+}
+
+.national-results > * > * {
+  min-width: 150px;
+}
+
+.national-results > .win {
+  font-weight: bold;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
