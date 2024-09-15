@@ -94,9 +94,8 @@ with open("../raw_data/countypres_2000-2020.csv") as f:
             ec["republican"] = 286
             ec["democrat"] = 251
             ec["other"] = 1
-            pv["republican"] = 50456062
-            pv["democrat"] = 50999897
-            pv["green"] = 2882955
+            pv["republican"] = 62040610
+            pv["democrat"] = 59028444
         elif year == "2008":
             ec["republican"] = 173
             ec["democrat"] = 365
