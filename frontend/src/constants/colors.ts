@@ -7,6 +7,10 @@ const colors = {
         "green": "green",
         "other": "gray",
         "undefined": "lightgray"
+    },
+    "genders": {
+        "male": "aqua",
+        "female": "magenta"
     }
 };
 

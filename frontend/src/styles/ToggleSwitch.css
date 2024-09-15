@@ -43,4 +43,10 @@
   input:checked + .slider:before {
     transform: translateX(17px);
   }
-  
+
+  .switch input:checked:disabled + .slider {
+    /* Apply your styles here */
+    /* background-color: gray; Example: change the background color */
+    cursor: not-allowed;
+    opacity: 0.5; /* Example: reduce opacity to indicate disabled state */
+}
