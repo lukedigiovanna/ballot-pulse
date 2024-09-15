@@ -430,7 +430,7 @@ function App() {
       <div className="grid grid-rows-1 grid-cols-3 w-full justify-center">
         <div>
           {
-            year > 2000 &&
+            ((year > 2000 && view === "Election Results") || (year > 2012 && view !== "Election Results")) &&
             <p className="mt-2 text-start cursor-pointer text-blue-600 hover:text-purple-600" onClick={() => {
                 if (view !== "Election Results") {
                   setYear(Math.max(2012, year - 4));
@@ -567,7 +567,7 @@ function App() {
         <StateGeoJsonMap statesGeoJson={usStatesGeoJson} colorFunction={colorFunction} tooltipFunction={tooltipFunction}/>
       }
 
-      <div className="border-b-2 border-b-black w-full my-2" />
+      <div className="border-b-2 border-b-gray-400 w-full my-2" />
       
       <h1 className="font-bold text-2xl">
         National Results
@@ -631,7 +631,20 @@ function App() {
         }
       </table>
 
+      <div className="border-b-2 border-b-black w-full my-2" />
+
+      <div>
+        <span className="font-bold">A note about how correlation works:</span> areas with a high
+        value of the selected data field and voted highly for the selected party show up in a 
+        bright color. For example, selecting "Adult Population" and "Democrat Correlation" essentially
+        show the areas with high population that voted for the Democrat in that election.
+      </div>
+
       <div className="h-48"/>
+
+      <p className="text-center italic">
+        Made with love for VTHacks XII!
+      </p>
     </div>
   );
 }
