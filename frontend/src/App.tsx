@@ -643,7 +643,7 @@ function App() {
       <div className="h-48"/>
 
       <p className="text-center italic">
-        Made with love for VTHacks XII!
+        Made with love by Luke DiGiovanna for VTHacks XII!
       </p>
     </div>
   );
