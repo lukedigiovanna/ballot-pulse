@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/ballot-pulse/static/css/main.30b5ee13.css",
+    "main.js": "/ballot-pulse/static/js/main.183dfc9c.js",
+    "index.html": "/ballot-pulse/index.html",
+    "main.30b5ee13.css.map": "/ballot-pulse/static/css/main.30b5ee13.css.map",
+    "main.183dfc9c.js.map": "/ballot-pulse/static/js/main.183dfc9c.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.30b5ee13.css",
+    "static/js/main.183dfc9c.js"
+  ]
+}
