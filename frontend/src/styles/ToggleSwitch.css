@@ -44,7 +44,7 @@
     transform: translateX(17px);
   }
 
-  .switch input:checked:disabled + .slider {
+  .switch input:disabled + .slider {
     /* Apply your styles here */
     /* background-color: gray; Example: change the background color */
     cursor: not-allowed;

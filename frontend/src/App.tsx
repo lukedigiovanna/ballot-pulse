@@ -22,8 +22,9 @@ const usStatesGeoJson = useStatesGeoJsonData as FeatureCollection;
 type CountryView = "county" | "state";
 type ColorMode = "solid" | "gradient";
 type DataView = "data" | "correlation";
+type Party = "Republican" | "Democrat";
 
-const views = ["Election Results", "Adult Population", "Adults With Bachelors", "Median Income", "Adults With High School", "Adults With Some College", "Gender"];
+const views = ["Election Results", "Turnout", "Adult Population", "Adults With Bachelors", "Median Income", "Adults With High School", "Adults With Some College", "Gender"];
 
 function App() {
   const [countryView, setCountryView] = React.useState<CountryView>("state");
@@ -33,6 +34,8 @@ function App() {
 
   const [dataView, setDataView] = React.useState<DataView>("data");
   const [view, setView] = React.useState<string>(views[0]);
+
+  const [party, setParty] = React.useState<Party>("Republican");
 
   React.useEffect(() => {
     if (view !== "Election Results") {
@@ -72,9 +75,54 @@ function App() {
     console.log("recompute color function");
     return (d: any) => {
       const fp = countryView === "state" ? stateNameToFP(d.properties.name as string) : d.properties.STATEFP + d.properties.COUNTYFP;
+      const results = (electionResults as any)[year]["results"];
+      if (!Object.hasOwn(results, fp)) {
+        return "lightgray";
+      }
+      const electionData = results[fp];
 
-      
+      const corr = (R: number) => {
+        if (dataView === "data") {
+          return R;
+        }
+        else { // actually computing corr now
+          let p;
+          if (party === "Republican") {
+            p = electionData["republican"] / electionData["total"];
+          }
+          else { // Democrat
+            p = electionData["democrat"] / electionData["total"];
+          }
+          const T = Math.max(Math.min((p - 0.25) / 0.5, 1), 0);
+          return Math.sin(T * Math.PI / 2) * Math.sin(R * Math.PI / 2);
+          // return 1 - Math.sqrt(Math.abs((1 - R) * (1 - R) - (1 - T) * (1 - T)));
+          // if (R > 0.6 && T > 0.6) {
+          //   return 1;
+          // }
+          // else {
+          //   return 0;
+          // }
+        }
+      }
+
+      const cmap = (map: any) => {
+        if (dataView === "data") {
+          return map;
+        }
+        else {
+          if (party === 'Republican') {
+            return interpolate(["white", colors.parties.republican]);
+          }
+          else { // Democrat
+            return interpolate(["white", colors.parties.democrat]);
+          }
+        }
+      }
+
       if (view !== "Election Results") {
+        if (!Object.hasOwn(education, year)) {
+          return "lightgray";
+        }
         const data = (education as any)[year];
         if (!Object.hasOwn(data, fp)) {
           return "lightgray";
@@ -105,12 +153,15 @@ function App() {
         }
         else if (view === "Median Income") {
           const income = countyData["median_income"];
-          const R = Math.min(Math.max(0, (income - 25000) / 40000), 1);
-          const colormap = interpolate(["#cfe2f3", "#084594"]);
+          const R = corr(Math.min(Math.max(0, (income - 25000) / 40000), 1));
+          const colormap = cmap(interpolate(["#cfe2f3", "#084594"]));
           return colormap(R);
         }
         else if (view === "Adult Population") {
           const population = countyData["male_population"] + countyData["female_population"];
+          if (dataView === "correlation") {
+            return cmap(null)(corr(Math.min(population / 200000, 1)))
+          }
           if (population < 10000) {
             return "#deebf7"
           }
@@ -128,90 +179,93 @@ function App() {
           }
         }
         else if (view === "Adults With High School") {
-          const R = Math.min((hs - 75) / 18, 1);
-          const colormap = interpolate(["#830404", "#cde9f5"]);
+          const R = corr(Math.min((hs - 75) / 18, 1));
+          const colormap = cmap(interpolate(["#830404", "#cde9f5"]));
           return colormap(R); 
         }
         else if (view === "Adults With Some College") {
-          const R = Math.min((someCollege - 30) / 30, 1);
-          const colormap = interpolate(["#830404", "#cde9f5"]);
+          const R = corr(Math.min((someCollege - 30) / 30, 1));
+          const colormap = cmap(interpolate(["#830404", "#cde9f5"]));
           return colormap(R);
         }
         else if (view === "Adults With Bachelors") {
-          const R = Math.min((bachelors - 15) / 30, 1);
-          const colormap = interpolate(["#deebf7", "#3182bd"]);
+          const R = corr(Math.min((bachelors - 15) / 30, 1));
+          const colormap = cmap(interpolate(["#deebf7", "#3182bd"]));
+          return colormap(R);
+        }
+        else if (view === "Turnout") {
+          
+          const votes = electionData["total"];
+          const population = countyData["male_population"] + countyData["female_population"];
+          const turnout = votes / population;
+          const R = corr(Math.max(Math.min((turnout - 0.4) / 0.4, 1), 0));
+          const colormap = cmap(interpolate(["#deebf7", "#3182bd"]));
           return colormap(R);
         }
       }
-
-      const results = (electionResults as any)[year]["results"];
-
-      if (!Object.hasOwn(results, fp)) {
-        return colors.parties.other;
-      }
-
-      const electionData = results[fp];
-      const parties = Object.keys(electionData);
-
-      if (diffMode) {
-        if (year === 2000) {
-          return colors.parties.undefined;
-        }
-        const previousElectionData = (electionResults as any)[year - 4]["results"][fp];
-        if (!previousElectionData) {
-          return colors.parties.undefined;
-        }
-        const diffs: any = {};
-        parties.forEach((party) => {
-          const thisProp = electionData[party] / electionData["total"];
-          if (!Object.hasOwn(previousElectionData, party)) {
-            diffs[party] = thisProp;
+      else { // Election Results
+        const parties = Object.keys(electionData);
+  
+        if (diffMode) {
+          if (year === 2000) {
+            return colors.parties.undefined;
+          }
+          const previousElectionData = (electionResults as any)[year - 4]["results"][fp];
+          if (!previousElectionData) {
+            return colors.parties.undefined;
+          }
+          const diffs: any = {};
+          parties.forEach((party) => {
+            const thisProp = electionData[party] / electionData["total"];
+            if (!Object.hasOwn(previousElectionData, party)) {
+              diffs[party] = thisProp;
+            }
+            else {
+              const pastProp = previousElectionData[party] / previousElectionData["total"];
+              diffs[party] = thisProp - pastProp;
+            }
+          });
+          parties.sort((party1, party2) => {
+            return diffs[party2] - diffs[party1];
+          });
+          const color = (colors.parties as any)[parties[0]];
+          if (colorMode === "solid") {
+            return color;
           }
           else {
-            const pastProp = previousElectionData[party] / previousElectionData["total"];
-            diffs[party] = thisProp - pastProp;
+            const r = Math.max(Math.min(diffs[parties[0]] / 0.1, 1), 0.15);
+            const colormap = interpolate(["white", color]);
+            return colormap(r);
           }
-        });
-        parties.sort((party1, party2) => {
-          return diffs[party2] - diffs[party1];
-        });
-        const color = (colors.parties as any)[parties[0]];
-        if (colorMode === "solid") {
-          return color;
         }
         else {
-          const r = Math.max(Math.min(diffs[parties[0]] / 0.1, 1), 0.15);
-          const colormap = interpolate(["white", color]);
-          return colormap(r);
-        }
-      }
-      else {
-        parties.sort((party1, party2) => {
-          return electionData[party2] - electionData[party1]
-        });
-        // total is always the first
-  
-        let color;
-        if (Object.hasOwn(colors.parties, parties[1])) {
-          color = (colors.parties as any)[parties[1]];
-        }
-        else {
-          color =  colors.parties.other;
-        }
-        if (colorMode === "solid") {
-          return color;  
-        }
-        else {
-          const firstPlacePercent = electionData[parties[1]] / electionData["total"];
-          const secondPlacePercent = electionData[parties[2]] / electionData["total"];
-          const diff = firstPlacePercent - secondPlacePercent;
-          const r = Math.max(Math.min(1, diff / 0.15), 0.2);
-          const colormap = interpolate(["white", color]);
-          return colormap(r);
+          parties.sort((party1, party2) => {
+            return electionData[party2] - electionData[party1]
+          });
+          // total is always the first
+    
+          let color;
+          if (Object.hasOwn(colors.parties, parties[1])) {
+            color = (colors.parties as any)[parties[1]];
+          }
+          else {
+            color =  colors.parties.other;
+          }
+          if (colorMode === "solid") {
+            return color;  
+          }
+          else {
+            const firstPlacePercent = electionData[parties[1]] / electionData["total"];
+            const secondPlacePercent = electionData[parties[2]] / electionData["total"];
+            const diff = firstPlacePercent - secondPlacePercent;
+            const r = Math.max(Math.min(1, diff / 0.15), 0.2);
+            const colormap = interpolate(["white", color]);
+            return colormap(r);
+          }
         }
       }
     }
-  }, [year, colorMode, countryView, diffMode, view]);
+  }, [year, colorMode, countryView, diffMode, view, dataView, party]);
 
   const tooltipFunction = React.useMemo(() => {
     return (d: any) => {
@@ -222,23 +276,36 @@ function App() {
       div.appendChild(title);
       const fp = countryView === "state" ? stateNameToFP(d.properties.name as string) : d.properties.STATEFP + d.properties.COUNTYFP;
       const electionData = (electionResults as any)[year];
-      const educationData = (education as any)[year];
+      
+      if (!Object.hasOwn(electionData["results"], fp)) {
+        const p = document.createElement("p");
+        p.innerText = "No data found :(";
+        div.appendChild(p);
+        return div.outerHTML;
+      }
+      const stateData = electionData["results"][fp];
 
       if (view !== "Election Results") {
+        if (!Object.hasOwn(education, year)) {
+          return "lightgray";
+        }
+        const educationData = (education as any)[year];
         if (!Object.hasOwn(educationData, fp)) {
           const p = document.createElement("p");
           p.innerText = "No data found :(";
           div.appendChild(p);
           return div.outerHTML;
         }
+        const stateData = electionData["results"][fp];
+
         const countyData = educationData[fp];
         const bachelors = countyData["bachelors_or_higher"];
         const someCollege = bachelors + countyData["some_college"];
         const hs = someCollege + countyData["hs"];
+        const mpop = countyData["male_population"];
+        const fpop = countyData["female_population"];
+        const tpop = mpop + fpop;
         if (view === "Gender") {
-          const mpop = countyData["male_population"];
-          const fpop = countyData["female_population"];
-          const tpop = mpop + fpop;
           const mpp = document.createElement("p");
           mpp.innerText = `Males: ${mpop.toLocaleString()} (${Math.round(mpop / tpop * 1000) / 10}%)`
           const fpp = document.createElement("p");
@@ -276,15 +343,18 @@ function App() {
           p.innerText = percent + "%";
           div.appendChild(p);
         }
+        else if (view === "Turnout") {
+          const votes = stateData["total"];
+          const turnout = votes / tpop;
+          const p = document.createElement("p");
+          p.innerText = Math.round(turnout * 100) + "%";
+          div.appendChild(p);
+          const p2 = document.createElement("p");
+          p2.innerText = `${votes.toLocaleString()}/${tpop.toLocaleString()}`
+          div.appendChild(p2);
+        }
       }
       else { // Election Results
-        if (!Object.hasOwn(electionData["results"], fp)) {
-          const p = document.createElement("p");
-          p.innerText = "No data found :(";
-          div.appendChild(p);
-          return div.outerHTML;
-        }
-        const stateData = electionData["results"][fp];
         const candidates = electionData["candidates"];
         const parties = Object.keys(stateData);
         parties.sort((party1, party2) => {
@@ -341,11 +411,11 @@ function App() {
       }
       return div.outerHTML;
     }
-  }, [year, countryView, diffMode, view]);
+  }, [year, countryView, diffMode, view, dataView, party]);
 
   return (
     <div className="flex flex-col items-center p-4 max-w-5xl mx-auto">
-      <h1 className="text-center text-5xl font-bold">
+      <h1 className="text-center text-6xl font-bold">
         Ballot Pulse
       </h1>
       <h1 className="font-bold text-xl">
@@ -386,20 +456,22 @@ function App() {
         </div>
       </div>
       <div className="border-b-2 border-b-black w-full my-2" />
-      <div className="mb-4 flex justify-center items-center">
-        <p className="h-fit mr-2 font-bold text-lg">
-          Data View:
-        </p>
-        <select name="data-views" className="rounded-md px-2 py-1 w-[220px] border-2 border-black font-bold" onChange={(e) => {
-          setView(e.target.value);
-        }}>
-          {
-            views.map(view =>
-              <option value={view}>{view}</option>
-            )
-          }
-        </select>
-        <div className="flex self-start mx-10 space-x-2 w-[260px]">
+      <div className="mb-4 grid grid-cols-3">
+        <div className="flex justify-center items-center">
+          <p className="h-fit mr-2 font-bold text-lg">
+            Data View:
+          </p>
+          <select name="data-views" className="rounded-md px-2 py-1 w-[220px] border-[1.5px] border-black font-bold" onChange={(e) => {
+            setView(e.target.value);
+          }}>
+            {
+              views.map(view =>
+                <option value={view}>{view}</option>
+              )
+            }
+          </select>
+        </div>
+        <div className="flex self-start mx-10 space-x-2">
           <ToggleSwitch isChecked={dataView === "correlation"} disabled={view === "Election Results"} onToggle={() => {
             if (dataView === "data") {
               setDataView("correlation");
@@ -412,8 +484,21 @@ function App() {
             { dataView === "data" ? "Raw Data" : "Election Correlation" }
           </h1>
         </div>
+        <div className="flex self-start mx-10 space-x-2">
+          <ToggleSwitch isChecked={party === "Democrat"} disabled={view === "Election Results" || dataView === "data" || view === "Gender"} onToggle={() => {
+            if (party === "Republican") {
+              setParty("Democrat");
+            }
+            else {
+              setParty("Republican");
+            }
+          }} />
+          <h1 className="self-center font-bold text-lg">
+            { party } Correlation
+          </h1>
+        </div>
       </div>
-      <div className="grid grid-cols-3">
+      <div className="grid grid-cols-3 w-full">
         <div className="flex self-start mx-10 space-x-2">
           <ToggleSwitch isChecked={countryView === "county"} disabled={view !== "Election Results"} onToggle={() => {
             if (countryView === "county") {
@@ -441,7 +526,7 @@ function App() {
           </h1>
         </div>
         <div className="flex self-start mx-10 space-x-2">
-          <ToggleSwitch isChecked={diffMode} disabled={false} onToggle={() => {
+          <ToggleSwitch isChecked={diffMode} disabled={view !== "Election Results"} onToggle={() => {
             setDiffMode(!diffMode);
           }} />
           <h1 className="self-center font-bold text-lg">
@@ -465,7 +550,7 @@ function App() {
           </div>
           <div className="mr-8">
             <p className="text-right font-bold text-2xl mb-0">
-              {
+             {
                 (electionResults as any)[year]["candidates"].find((e: any) => e.party === "republican")["name"]
               }
             </p>
